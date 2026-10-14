@@ -26,7 +26,7 @@ export default function Calculo() {
   })
 
   const [dados, setDados] = useState({
-    salarioMinimo: 1518,
+    salarioMinimo: 1621,
     percentual: 1.0,
     imposto: 0.12,
     porcFiliais: 0.25,
