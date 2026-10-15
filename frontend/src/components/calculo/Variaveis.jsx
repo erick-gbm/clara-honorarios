@@ -4,9 +4,9 @@ const INTEGRACOES = [
   { key: "niboDocs", label: "Nibo (Docs + CC)" },
   { key: "niboGF", label: "Nibo (GF Plus)" },
   { key: "hubcount", label: "Hubcount" },
-  { key: "bragaOnline", label: "Braga Online", fixo: true },
+  { key: "bragaOnline", label: "Braga Online" },
   { key: "centroCustos", label: "Centro de Custos" },
-  { key: "crfCompleto", label: "CRF Completo", fixo: true },
+  { key: "crfCompleto", label: "CRF Completo" },
   { key: "omieFit", label: "Omie Fit", semValor: true },
   { key: "omieCliente", label: "Omie Cliente", semValor: true },
   { key: "sistemaProprio", label: "Sistema Próprio", semValor: true },
@@ -145,16 +145,15 @@ export default function Variaveis({ dados, setDados, integracoes, setIntegracoes
           return (
             <label
               key={item.key}
-              className={`group relative flex min-h-24 items-center justify-center rounded-xl border-2 p-4 text-center text-sm font-semibold transition-all ${item.fixo ? "cursor-default" : "cursor-pointer"} ${
+              className={`group relative flex min-h-24 items-center justify-center rounded-xl border-2 p-4 text-center text-sm font-semibold transition-all cursor-pointer ${
                 integracoes[item.key]
                   ? "border-blue-600 bg-blue-50 text-blue-700 shadow-sm"
-                  : `border-slate-200 bg-white text-slate-700 ${item.fixo ? "" : "hover:border-blue-400 hover:bg-slate-50"}`
+                  : "border-slate-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-slate-50"
               }`}
             >
               <input
                 checked={Boolean(integracoes[item.key])}
                 className="sr-only"
-                disabled={item.fixo}
                 type="checkbox"
                 onChange={(e) =>
                   setIntegracoes((atual) => ({ ...atual, [item.key]: e.target.checked }))

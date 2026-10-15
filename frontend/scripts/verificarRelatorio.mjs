@@ -38,6 +38,8 @@ import { dataValida, validarRelatorio } from "../src/utils/relatorio/validarRela
       observacoes: [{ nome: "Serviço extra", valor: "25,20" }],
     },
     integracoes: {
+      bragaOnline: true,
+      crfCompleto: true,
       niboDocs: true,
       niboGF: true,
       omieFit: true,
@@ -64,6 +66,9 @@ import { dataValida, validarRelatorio } from "../src/utils/relatorio/validarRela
   for (const campo of ["sis_omiefit", "sis_omiecliente", "sis_proprio", "sis_smartfin", "sis_nibogf", "sis_ccnibo"]) {
     assert.equal(valores[campo], "X", `Marcação ausente: ${campo}`)
   }
+  const semBragaECrf = dadosDoRelatorio({ ...simulacao, integracoes: { niboGF: true } })
+  assert.equal(semBragaECrf.crf_completo, "")
+  assert.ok(!semBragaECrf.servicos_adicionais.includes("Braga Online"))
   const somenteNiboGF = dadosDoRelatorio({ ...simulacao, integracoes: { niboGF: true } })
   assert.equal(somenteNiboGF.sis_nibogf, "X")
   assert.equal(somenteNiboGF.sis_ccnibo, "")
@@ -81,8 +86,13 @@ import { dataValida, validarRelatorio } from "../src/utils/relatorio/validarRela
   })
   assert.ok(comOutrosServicos.servicos_adicionais.includes("Hubcount"))
   assert.ok(comOutrosServicos.servicos_adicionais.includes("Centro de Custos"))
-  const custoFixo = calcularIntegracoes(simulacao.dados, 100, 50, {})
+  const padrao = { bragaOnline: true, crfCompleto: true }
+  const custoFixo = calcularIntegracoes(simulacao.dados, 100, 50, padrao)
+  const semPadrao = calcularIntegracoes(simulacao.dados, 100, 50, {})
+  assert.equal(semPadrao.total, 0)
+  assert.equal(semPadrao.quantidade, 0)
   const custoComSistemasSemValor = calcularIntegracoes(simulacao.dados, 100, 50, {
+    ...padrao,
     omieFit: true, omieCliente: true, sistemaProprio: true, smartFin: true,
   })
   assert.equal(custoComSistemasSemValor.total, custoFixo.total)

@@ -10,6 +10,7 @@ import {
 
 const PERCENTUAL_MIN = 50
 const PERCENTUAL_MAX = 110
+const LUCRO_SLIDER_MAX = 300
 const IMPOSTO_MIN = 5
 const IMPOSTO_MAX = 20
 
@@ -45,6 +46,16 @@ export default function BaseCalculo({ dados, setDados, resultado }) {
   )
 
   const salarioPercentual = salarioMinimo * (percentualAtual / 100)
+
+  const lucroPercentualExibido = Number((Number(dados.percLucro ?? 0.25) * 100).toFixed(2))
+  const [lucroInput, setLucroInput] = useState(String(lucroPercentualExibido))
+
+  // Aceita qualquer percentual >= 0, inclusive acima de 100%.
+  const atualizarLucro = (texto) => {
+    setLucroInput(texto)
+    const valor = parseLocalizedNumber(texto)
+    setDados({ ...dados, percLucro: Number.isFinite(valor) && valor > 0 ? valor / 100 : 0 })
+  }
 
   const [percentualInput, setPercentualInput] = useState(String(percentualAtual))
   const [impostoInput, setImpostoInput] = useState(String(impostoAtual))
@@ -250,30 +261,46 @@ export default function BaseCalculo({ dados, setDados, resultado }) {
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <label className="font-medium text-slate-700" htmlFor="percentual-lucro">
-            Lucro da Empresa
-          </label>
-          <span className="font-semibold text-blue-700">{Number(dados.percLucro ?? 0.25) * 100}%</span>
+          <div className="flex items-center gap-2 font-medium text-slate-700">
+            <label htmlFor="percentual-lucro">Margem de Lucro</label>
+            <TooltipInfo
+              text={`Calculo: ${formatCurrency(resultado?.subtotal)} x ${lucroPercentualExibido}% = ${formatCurrency(resultado?.lucroValor)}`}
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <input
+              aria-label="Percentual da margem de lucro"
+              className="w-20 rounded-lg border border-slate-300 bg-white px-2 py-1 text-right text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/30"
+              inputMode="decimal"
+              type="text"
+              value={lucroInput}
+              onChange={(e) => atualizarLucro(e.target.value)}
+              onBlur={() => setLucroInput(String(lucroPercentualExibido))}
+            />
+            <span className="text-slate-500">%</span>
+          </div>
         </div>
         <input
           className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-blue-600"
           id="percentual-lucro"
-          max="100"
+          max={Math.max(LUCRO_SLIDER_MAX, lucroPercentualExibido)}
           min="0"
-          step="25"
+          step="1"
           type="range"
-          value={Number(dados.percLucro ?? 0.25) * 100}
-          onChange={(e) => setDados({ ...dados, percLucro: Number(e.target.value) / 100 })}
+          value={lucroPercentualExibido}
+          onChange={(e) => atualizarLucro(e.target.value)}
         />
         <div className="mt-1 flex justify-between text-xs text-slate-500">
           <span>0%</span>
-          <span>25%</span>
-          <span>50%</span>
-          <span>75%</span>
           <span>100%</span>
+          <span>200%</span>
+          <span>300%</span>
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Percentual acrescentado sobre a soma dos itens do honorário.
+          Percentual acrescentado sobre a soma dos itens do honorário. Valores acima de 300% podem ser digitados.
+        </p>
+        <p className="mt-2 text-sm text-slate-700">
+          Valor adicionado: <strong>{formatCurrency(resultado?.lucroValor)}</strong>
         </p>
       </div>
 

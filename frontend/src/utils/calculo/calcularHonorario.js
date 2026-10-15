@@ -51,7 +51,8 @@ export function calcularHonorario(dados = {}, integracoes = {}) {
     integracoesValor +
     filiaisValor
   const percLucro = Number(dados.percLucro ?? 0.25)
-  let honorarioTotal = subtotal * (1 + percLucro)
+  const lucroValor = subtotal * percLucro
+  let honorarioTotal = subtotal + lucroValor
 
   if (piso > honorarioTotal) honorarioTotal = piso
   honorarioTotal += observacoesValor
@@ -72,6 +73,8 @@ export function calcularHonorario(dados = {}, integracoes = {}) {
     filiaisValor: filiaisValor || 0,
     sociosValor: sociosValor || 0,
     percLucro,
+    subtotal: subtotal || 0,
+    lucroValor: lucroValor || 0,
     regime: dados.regime || "",
     segmento: dados.segmento || [],
     balancete: dados.balancete || "",

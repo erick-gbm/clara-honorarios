@@ -2,20 +2,46 @@ import { useState } from "react"
 
 import { formatCurrency, parseLocalizedNumber } from "../../utils/calculo/helpers"
 
-/**
- * Retorna "---" para valores vazios e mantem o valor original quando preenchido.
- */
-const getDisplay = (value) => {
-  if (Array.isArray(value)) return value.length ? value.join(", ") : "---"
-  if (value === null || value === undefined || value === "" || value === 0) return "---"
-  return value
+const NOMES_INTEGRACOES = {
+  niboDocs: "Nibo (Docs + CC)",
+  niboGF: "Nibo (GF Plus)",
+  hubcount: "Hubcount",
+  bragaOnline: "Braga Online",
+  centroCustos: "Centro de Custos",
+  crfCompleto: "CRF Completo",
+  omieFit: "Omie Fit",
+  omieCliente: "Omie Cliente",
+  sistemaProprio: "Sistema Próprio",
+  smartFin: "SmartFin",
 }
 
-/**
- * Define cor mais clara para placeholders e cor padrao para valores preenchidos.
- */
-const getClass = (value) => (value === "---" ? "text-slate-400" : "text-slate-900")
-const temValor = (value) => value !== "---"
+const preenchido = (valor) => {
+  if (Array.isArray(valor)) return valor.length > 0
+  return valor !== null && valor !== undefined && valor !== "" && Number(valor) !== 0
+}
+
+function Linha({ rotulo, detalhe, valor, destaque }) {
+  return (
+    <li className="flex items-start justify-between gap-4 py-2.5">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-slate-700">{rotulo}</p>
+        {detalhe && <p className="mt-0.5 break-words text-xs text-slate-500">{detalhe}</p>}
+      </div>
+      <span className={`shrink-0 text-sm font-semibold tabular-nums ${destaque || "text-slate-900"}`}>
+        {valor}
+      </span>
+    </li>
+  )
+}
+
+function Secao({ titulo, children }) {
+  return (
+    <div>
+      <h4 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{titulo}</h4>
+      <ul className="divide-y divide-slate-100">{children}</ul>
+    </div>
+  )
+}
 
 export default function ResumoHonorario({ empresa, dados, integracoes, resultado }) {
   const [gerando, setGerando] = useState(false)
@@ -39,20 +65,10 @@ export default function ResumoHonorario({ empresa, dados, integracoes, resultado
     }
   }
 
-  const descricaoVariaveis = resultado?.variaveisSelecionadas
-    ? `${resultado.variaveisSelecionadas} selecionada(s)`
-    : "---"
+  const integracoesSelecionadas = Object.entries(NOMES_INTEGRACOES)
+    .filter(([chave]) => integracoes?.[chave])
+    .map(([, nome]) => nome)
 
-  const faturamentoTexto =
-    Number(dados.faturamento || 0) > 0 ? formatCurrency(dados.faturamento) : "---"
-
-  const regimeTexto = getDisplay(dados.regime)
-  const segmentoTexto = getDisplay(dados.segmento)
-  const sociosTexto = getDisplay(dados.socios)
-  const funcionariosTexto = getDisplay(dados.funcionarios)
-  const filiaisTexto = getDisplay(dados.filiais)
-  const balanceteTexto = getDisplay(dados.balancete)
-  const reuniaoTexto = getDisplay(dados.reuniao)
   const observacoesAdicionais = Array.isArray(dados.observacoes)
     ? dados.observacoes.filter((observacao) => {
         const nomePreenchido = String(observacao?.nome || "").trim() !== ""
@@ -60,9 +76,60 @@ export default function ResumoHonorario({ empresa, dados, integracoes, resultado
         return nomePreenchido || valorPreenchido
       })
     : []
-  const descricaoObservacoes = observacoesAdicionais.length
-    ? `${observacoesAdicionais.length} adicional(is)`
-    : "---"
+
+  const composicao = [
+    preenchido(dados.regime) && {
+      rotulo: "Regime",
+      detalhe: dados.regime,
+      valor: formatCurrency(resultado?.regimeValor),
+    },
+    preenchido(dados.segmento) && {
+      rotulo: "Segmento",
+      detalhe: Array.isArray(dados.segmento) ? dados.segmento.join(", ") : dados.segmento,
+      valor: formatCurrency(resultado?.segmentoValor),
+    },
+    Number(dados.faturamento || 0) > 0 && {
+      rotulo: "Faturamento",
+      detalhe: formatCurrency(dados.faturamento),
+      valor: formatCurrency(resultado?.acresFaturamento),
+    },
+    preenchido(dados.socios) && {
+      rotulo: "Sócios",
+      detalhe: `${dados.socios} sócio(s)`,
+      valor: formatCurrency(resultado?.sociosValor),
+    },
+    preenchido(dados.funcionarios) && {
+      rotulo: "Funcionários",
+      detalhe: `${dados.funcionarios} funcionário(s)`,
+      valor: formatCurrency(resultado?.funcionariosValor),
+    },
+    preenchido(dados.filiais) && {
+      rotulo: "Filiais",
+      detalhe: `${dados.filiais} filial(is)`,
+      valor: formatCurrency(resultado?.filiaisValor),
+    },
+    preenchido(dados.balancete) && {
+      rotulo: "Balancete",
+      detalhe: dados.balancete,
+      valor: formatCurrency(resultado?.balanceteValor),
+    },
+    preenchido(dados.reuniao) && {
+      rotulo: "Reunião",
+      detalhe: dados.reuniao,
+      valor: formatCurrency(resultado?.reuniaoValor),
+    },
+    integracoesSelecionadas.length > 0 && {
+      rotulo: "Variáveis / Integrações",
+      detalhe: integracoesSelecionadas.join(", "),
+      valor: formatCurrency(resultado?.integracoesValor),
+    },
+  ].filter(Boolean)
+
+  const subtotal = Number(resultado?.subtotal || 0)
+  const lucroValor = Number(resultado?.lucroValor || 0)
+  const percLucro = Number((Number(resultado?.percLucro ?? 0.25) * 100).toFixed(2))
+  const ajustePiso = Math.max(0, Number(resultado?.piso || 0) - (subtotal + lucroValor))
+  const observacoesValor = Number(resultado?.observacoesValor || 0)
 
   return (
     <div className="sticky top-24 overflow-hidden rounded-xl shadow-lg">
@@ -73,92 +140,53 @@ export default function ResumoHonorario({ empresa, dados, integracoes, resultado
         <div className="text-4xl font-bold tracking-tight">{formatCurrency(resultado?.honorarioTotal)}</div>
       </div>
 
-      <div className="border border-slate-200 bg-white p-6">
-        <h3 className="mb-4 border-b border-slate-100 pb-2 font-semibold text-slate-900">
-          Resumo da Simulação
-        </h3>
+      <div className="space-y-5 border border-slate-200 bg-white p-6">
+        <h3 className="border-b border-slate-100 pb-2 font-semibold text-slate-900">Resumo da Simulação</h3>
 
-        <ul className="space-y-3 text-sm">
-          <li className="flex justify-between gap-4">
-            <span className="text-slate-500">Regime:</span>
-            <span className={`text-right font-medium ${getClass(regimeTexto)}`}>
-              {regimeTexto}
-              {temValor(regimeTexto) ? ` (${formatCurrency(resultado?.regimeValor)})` : ""}
+        <Secao titulo="Composição do valor">
+          {composicao.length === 0 ? (
+            <li className="py-3 text-sm text-slate-400">Preencha os dados para ver a composição.</li>
+          ) : (
+            composicao.map((item) => <Linha key={item.rotulo} {...item} />)
+          )}
+        </Secao>
+
+        <div className="rounded-lg bg-slate-50 p-4">
+          <ul className="divide-y divide-slate-200/70">
+            <Linha rotulo="Subtotal dos itens" valor={formatCurrency(subtotal)} />
+            <Linha
+              rotulo="Margem de Lucro"
+              detalhe={`${percLucro}% sobre o subtotal`}
+              valor={`+ ${formatCurrency(lucroValor)}`}
+              destaque="text-emerald-600"
+            />
+            {ajustePiso > 0 && (
+              <Linha
+                rotulo="Ajuste ao piso"
+                detalhe={`Piso de ${formatCurrency(resultado?.piso)}`}
+                valor={`+ ${formatCurrency(ajustePiso)}`}
+                destaque="text-amber-600"
+              />
+            )}
+            {observacoesAdicionais.length > 0 && (
+              <Linha
+                rotulo="Observações"
+                detalhe={`${observacoesAdicionais.length} adicional(is)`}
+                valor={`+ ${formatCurrency(observacoesValor)}`}
+                destaque="text-emerald-600"
+              />
+            )}
+          </ul>
+          <div className="mt-1 flex items-center justify-between border-t border-slate-300 pt-3">
+            <span className="text-sm font-semibold text-slate-900">Total mensal</span>
+            <span className="text-lg font-bold tabular-nums text-blue-700">
+              {formatCurrency(resultado?.honorarioTotal)}
             </span>
-          </li>
-          <li className="flex justify-between gap-4">
-            <span className="text-slate-500">Segmento:</span>
-            <span className={`text-right font-medium ${getClass(segmentoTexto)}`}>
-              {segmentoTexto}
-              {temValor(segmentoTexto) ? ` (${formatCurrency(resultado?.segmentoValor)})` : ""}
-            </span>
-          </li>
-          <li className="flex justify-between gap-4">
-            <span className="text-slate-500">Faturamento:</span>
-            <span className={`text-right font-medium ${getClass(faturamentoTexto)}`}>
-              {faturamentoTexto}
-              {temValor(faturamentoTexto) ? ` (${formatCurrency(resultado?.acresFaturamento)})` : ""}
-            </span>
-          </li>
-          <li className="flex justify-between gap-4">
-            <span className="text-slate-500">Sócios:</span>
-            <span className={`text-right font-medium ${getClass(sociosTexto)}`}>
-              {sociosTexto}
-              {temValor(sociosTexto) ? ` (${formatCurrency(resultado?.sociosValor)})` : ""}
-            </span>
-          </li>
-          <li className="flex justify-between gap-4">
-            <span className="text-slate-500">Funcionários:</span>
-            <span className={`text-right font-medium ${getClass(funcionariosTexto)}`}>
-              {funcionariosTexto}
-              {(temValor(funcionariosTexto)) ? ` (${formatCurrency(resultado?.funcionariosValor)})` : ""}
-            </span>
-          </li>
-          <li className="flex justify-between gap-4">
-            <span className="text-slate-500">Filiais:</span>
-            <span className={`text-right font-medium ${getClass(filiaisTexto)}`}>
-              {filiaisTexto}
-              {temValor(filiaisTexto) ? ` (${formatCurrency(resultado?.filiaisValor)})` : ""}
-            </span>
-          </li>
-          <li className="flex justify-between gap-4">
-            <span className="text-slate-500">Balancete:</span>
-            <span className={`text-right font-medium ${getClass(balanceteTexto)}`}>
-              {balanceteTexto}
-              {temValor(balanceteTexto) ? ` (${formatCurrency(resultado?.balanceteValor)})` : ""}
-            </span>
-          </li>
-          <li className="flex justify-between gap-4">
-            <span className="text-slate-500">Reuniao:</span>
-            <span className={`text-right font-medium ${getClass(reuniaoTexto)}`}>
-              {reuniaoTexto}
-              {temValor(reuniaoTexto) ? ` (${formatCurrency(resultado?.reuniaoValor)})` : ""}
-            </span>
-          </li>
-          <li className="flex justify-between gap-4 border-t border-slate-200 pt-2">
-            <span className="text-slate-500">Variáveis:</span>
-            <span className={`text-right font-medium ${getClass(descricaoVariaveis)}`}>
-              {descricaoVariaveis}
-              {temValor(descricaoVariaveis) ? ` (${formatCurrency(resultado?.integracoesValor)})` : ""}
-            </span>
-          </li>
-          <li className="flex justify-between gap-4">
-            <span className="text-slate-500">Lucro ({Number(resultado?.percLucro ?? 0.25) * 100}%):</span>
-            <span className="text-right font-medium text-slate-900">
-              {formatCurrency(resultado?.lucroValor)}
-            </span>
-          </li>
-          <li className="flex justify-between gap-4">
-            <span className="text-slate-500">Observações:</span>
-            <span className={`text-right font-medium ${getClass(descricaoObservacoes)}`}>
-              {descricaoObservacoes}
-              {temValor(descricaoObservacoes) ? ` (${formatCurrency(resultado?.observacoesValor)})` : ""}
-            </span>
-          </li>
-        </ul>
+          </div>
+        </div>
 
         <button
-          className="mt-8 flex w-full items-center justify-center rounded-lg bg-blue-600 py-4 font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
+          className="flex w-full items-center justify-center rounded-lg bg-blue-600 py-4 font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
           disabled={gerando}
           type="button"
           onClick={baixarRelatorio}
@@ -166,7 +194,7 @@ export default function ResumoHonorario({ empresa, dados, integracoes, resultado
           {gerando ? "Gerando relatório..." : "Gerar Relatório de Honorários"}
         </button>
         {mensagemRelatorio && (
-          <div aria-live="polite" className={`mt-3 text-sm ${pendencias ? "text-red-700" : "text-slate-600"}`}>
+          <div aria-live="polite" className={`text-sm ${pendencias ? "text-red-700" : "text-slate-600"}`}>
             <p>{mensagemRelatorio}</p>
             {pendencias && Object.entries(pendencias).map(([grupo, campos]) => campos.length > 0 && (
               <div key={grupo} className="mt-2">

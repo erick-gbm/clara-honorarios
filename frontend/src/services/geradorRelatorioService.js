@@ -23,9 +23,8 @@ const moedaInformada = (valor) => valor === "" || valor == null ? "" : moedaSemS
 
 export function dadosDoRelatorio({ empresa, dados, integracoes, resultado }) {
   const prestadora = PRESTADORAS.find((item) => item.razaoSocial === empresa.prestadoraServico)
-  const integracoesAtivas = { ...integracoes, bragaOnline: true }
   const servicosSelecionados = Object.entries(NOMES_SERVICOS_ADICIONAIS)
-    .filter(([chave]) => integracoesAtivas[chave])
+    .filter(([chave]) => integracoes[chave])
     .map(([, nome]) => nome)
 
   if (dados.consultoria === "sim") servicosSelecionados.push("Consultoria")
@@ -59,7 +58,7 @@ export function dadosDoRelatorio({ empresa, dados, integracoes, resultado }) {
     sis_sem_movi: "",
     tributacao: texto(dados.regime),
     crf_basico: "",
-    crf_completo: "X",
+    crf_completo: integracoes.crfCompleto ? "X" : "",
     crf_movim: "",
     faturamento: moedaInformada(dados.faturamento),
     pro_labore: moedaSemSimbolo(Number(resultado.funcionariosValor || 0) + Number(resultado.sociosValor || 0)),
