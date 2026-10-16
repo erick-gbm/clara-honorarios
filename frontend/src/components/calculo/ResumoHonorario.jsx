@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import { formatCurrency, parseLocalizedNumber } from "../../utils/calculo/helpers"
+import { PERCENTUAL_LUCRO_MINIMO } from "../../utils/calculo/calcularHonorario"
 
 const NOMES_INTEGRACOES = {
   niboDocs: "Nibo (Docs + CC)",
@@ -127,7 +128,9 @@ export default function ResumoHonorario({ empresa, dados, integracoes, resultado
 
   const subtotal = Number(resultado?.subtotal || 0)
   const lucroValor = Number(resultado?.lucroValor || 0)
-  const percLucro = Number((Number(resultado?.percLucro ?? 0.25) * 100).toFixed(2))
+  const percLucro = Number(
+    (Number(resultado?.percLucro ?? PERCENTUAL_LUCRO_MINIMO) * 100).toFixed(2),
+  )
   const ajustePiso = Math.max(0, Number(resultado?.piso || 0) - (subtotal + lucroValor))
   const observacoesValor = Number(resultado?.observacoesValor || 0)
 

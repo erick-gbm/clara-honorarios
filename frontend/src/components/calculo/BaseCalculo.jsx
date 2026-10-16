@@ -7,6 +7,7 @@ import {
   parseIntegerInput,
   parseLocalizedNumber,
 } from "../../utils/calculo/helpers"
+import { PERCENTUAL_LUCRO_MINIMO } from "../../utils/calculo/calcularHonorario"
 
 const PERCENTUAL_MIN = 50
 const PERCENTUAL_MAX = 110
@@ -47,14 +48,25 @@ export default function BaseCalculo({ dados, setDados, resultado }) {
 
   const salarioPercentual = salarioMinimo * (percentualAtual / 100)
 
-  const lucroPercentualExibido = Number((Number(dados.percLucro ?? 0.25) * 100).toFixed(2))
+  const lucroPercentualInformado = Number(dados.percLucro ?? PERCENTUAL_LUCRO_MINIMO)
+  const lucroPercentualExibido = Number.isFinite(lucroPercentualInformado)
+    ? Math.max(
+        PERCENTUAL_LUCRO_MINIMO * 100,
+        Number((lucroPercentualInformado * 100).toFixed(2)),
+      )
+    : PERCENTUAL_LUCRO_MINIMO * 100
   const [lucroInput, setLucroInput] = useState(String(lucroPercentualExibido))
 
-  // Aceita qualquer percentual >= 0, inclusive acima de 100%.
+  // Aceita qualquer percentual >= 30%, inclusive acima de 100%.
   const atualizarLucro = (texto) => {
     setLucroInput(texto)
     const valor = parseLocalizedNumber(texto)
-    setDados({ ...dados, percLucro: Number.isFinite(valor) && valor > 0 ? valor / 100 : 0 })
+    setDados({
+      ...dados,
+      percLucro: Number.isFinite(valor)
+        ? Math.max(PERCENTUAL_LUCRO_MINIMO, valor / 100)
+        : PERCENTUAL_LUCRO_MINIMO,
+    })
   }
 
   const [percentualInput, setPercentualInput] = useState(String(percentualAtual))
@@ -284,14 +296,14 @@ export default function BaseCalculo({ dados, setDados, resultado }) {
           className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-blue-600"
           id="percentual-lucro"
           max={Math.max(LUCRO_SLIDER_MAX, lucroPercentualExibido)}
-          min="0"
+          min={PERCENTUAL_LUCRO_MINIMO * 100}
           step="1"
           type="range"
           value={lucroPercentualExibido}
           onChange={(e) => atualizarLucro(e.target.value)}
         />
         <div className="mt-1 flex justify-between text-xs text-slate-500">
-          <span>0%</span>
+          <span>30%</span>
           <span>100%</span>
           <span>200%</span>
           <span>300%</span>

@@ -7,7 +7,10 @@ import DadosEmpresa from "../components/calculo/DadosEmpresa"
 import Observacoes from "../components/calculo/Observacoes"
 import ResumoHonorario from "../components/calculo/ResumoHonorario"
 import Variaveis from "../components/calculo/Variaveis"
-import { calcularHonorario } from "../utils/calculo/calcularHonorario"
+import {
+  calcularHonorario,
+  PERCENTUAL_LUCRO_MINIMO,
+} from "../utils/calculo/calcularHonorario"
 import Header from "../components/general/Header"
 
 export default function Calculo() {
@@ -45,7 +48,7 @@ export default function Calculo() {
     reuniao: "",
     observacoes: [{ nome: "", valor: "" }],
 
-    percLucro: 0.25,
+    percLucro: PERCENTUAL_LUCRO_MINIMO,
   })
 
   const [integracoes, setIntegracoes] = useState({

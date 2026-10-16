@@ -10,6 +10,8 @@ import { calcularSocios } from "./sociosCalculo"
 import { calculoConsultoria } from "./calculoConsultoria"
 import { arredondar, parseLocalizedNumber } from "./helpers"
 
+export const PERCENTUAL_LUCRO_MINIMO = 0.3
+
 /**
  * Consolida todas as regras de cálculo de honorários e retorna os detalhamentos.
  */
@@ -50,7 +52,10 @@ export function calcularHonorario(dados = {}, integracoes = {}) {
     reuniaoValor +
     integracoesValor +
     filiaisValor
-  const percLucro = Number(dados.percLucro ?? 0.25)
+  const percLucroInformado = Number(dados.percLucro ?? PERCENTUAL_LUCRO_MINIMO)
+  const percLucro = Number.isFinite(percLucroInformado)
+    ? Math.max(PERCENTUAL_LUCRO_MINIMO, percLucroInformado)
+    : PERCENTUAL_LUCRO_MINIMO
   const lucroValor = subtotal * percLucro
   let honorarioTotal = subtotal + lucroValor
 
